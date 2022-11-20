@@ -85,4 +85,76 @@ class MondoTalkConfigManager
         return $this;
     }
 
+    /**
+     * Simple getter for configuration params
+     * If an exact match for key is not found,
+     * does a "contains" search on the key
+     *
+     * @param string $searchKey
+     * @return array
+     */
+    public function get($searchKey)
+    {
+        if (array_key_exists($searchKey, $this->configs)) {
+            return $this->configs[$searchKey];
+        } else {
+            $arr = array();
+            if ($searchKey !== '') {
+                foreach ($this->configs as $k => $v) {
+                    if (strstr($k, $searchKey)) {
+                        $arr[$k] = $v;
+                    }
+                }
+            }
+
+            return $arr;
+        }
+    }
+
+    /**
+     * Utility method for handling account configuration
+     * return config key corresponding to the API userId passed in
+     *
+     * If $userId is null, returns config keys corresponding to
+     * all configured accounts
+     *
+     * @param string|null $userId
+     * @return array|string
+     */
+    public function getIniPrefix($userId = null)
+    {
+        if ($userId == null) {
+            $arr = array();
+            foreach ($this->configs as $key => $value) {
+                $pos = strpos($key, '.');
+                if (strstr($key, "acct")) {
+                    $arr[] = substr($key, 0, $pos);
+                }
+            }
+            return array_unique($arr);
+        } else {
+            $iniPrefix = array_search($userId, $this->configs);
+            $pos = strpos($iniPrefix, '.');
+            $acct = substr($iniPrefix, 0, $pos);
+
+            return $acct;
+        }
+    }
+
+    /**
+     * returns the config file hashmap
+     */
+    public function getConfigHashmap()
+    {
+        return $this->configs;
+    }
+
+    /**
+     * Disabling __clone call
+     */
+    public function __clone()
+    {
+        trigger_error('Clone is not allowed.', E_USER_ERROR);
+    }
+
 }

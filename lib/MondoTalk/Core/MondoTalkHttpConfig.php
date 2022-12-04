@@ -201,4 +201,102 @@ class MondoTalkHttpConfig
         $this->curlOptions = $options;
     }
 
+    /**
+     * Set ssl parameters for certificate based client authentication
+     *
+     * @param      $certPath
+     * @param null $passPhrase
+     */
+    public function setSSLCert($certPath, $passPhrase = null)
+    {
+        $this->curlOptions[CURLOPT_SSLCERT] = realpath($certPath);
+        if (isset($passPhrase) && trim($passPhrase) != "") {
+            $this->curlOptions[CURLOPT_SSLCERTPASSWD] = $passPhrase;
+        }
+    }
+
+    /**
+     * Set connection timeout in seconds
+     *
+     * @param integer $timeout
+     */
+    public function setHttpTimeout($timeout)
+    {
+        $this->curlOptions[CURLOPT_CONNECTTIMEOUT] = $timeout;
+    }
+
+    /**
+     * Set HTTP proxy information
+     *
+     * @param string $proxy
+     * @throws MondoTalkConfigurationException
+     */
+    public function setHttpProxy($proxy)
+    {
+        $urlParts = parse_url($proxy);
+        if ($urlParts == false || !array_key_exists("host", $urlParts)) {
+            throw new MondoTalkConfigurationException("Invalid proxy configuration " . $proxy);
+        }
+        $this->curlOptions[CURLOPT_PROXY] = $urlParts["host"];
+        if (isset($urlParts["port"])) {
+            $this->curlOptions[CURLOPT_PROXY] .= ":" . $urlParts["port"];
+        }
+        if (isset($urlParts["user"])) {
+            $this->curlOptions[CURLOPT_PROXYUSERPWD] = $urlParts["user"] . ":" . $urlParts["pass"];
+        }
+    }
+
+    /**
+     * Set Http Retry Counts
+     *
+     * @param int $retryCount
+     */
+    public function setHttpRetryCount($retryCount)
+    {
+        $this->retryCount = $retryCount;
+    }
+
+    /**
+     * Get Http Retry Counts
+     *
+     * @return int
+     */
+    public function getHttpRetryCount()
+    {
+        return $this->retryCount;
+    }
+
+    /**
+     * Sets the User-Agent string on the HTTP request
+     *
+     * @param string $userAgentString
+     */
+    public function setUserAgent($userAgentString)
+    {
+        $this->curlOptions[CURLOPT_USERAGENT] = $userAgentString;
+    }
+
+    /**
+     * Retrieves an array of constant key, and value based on Prefix
+     *
+     * @param array $configs
+     * @param       $prefix
+     * @return array
+     */
+    public function getHttpConstantsFromConfigs($configs = array(), $prefix)
+    {
+        $arr = array();
+        if ($prefix != null && is_array($configs)) {
+            foreach ($configs as $k => $v) {
+                // Check if it startsWith
+                if (substr($k, 0, strlen($prefix)) === $prefix) {
+                    $newKey = ltrim($k, $prefix);
+                    if (defined($newKey)) {
+                        $arr[constant($newKey)] = $v;
+                    }
+                }
+            }
+        }
+        return $arr;
+    }
 }
